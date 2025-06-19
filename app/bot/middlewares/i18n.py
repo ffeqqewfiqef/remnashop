@@ -1,4 +1,3 @@
-import logging
 from typing import Any, Awaitable, Callable, Optional, Union
 
 from aiogram.types import CallbackQuery, ErrorEvent, Message
@@ -6,11 +5,11 @@ from fluent.runtime import FluentLocalization
 
 from app.core.constants import I18N_FORMATTER_KEY, USER_KEY
 from app.core.enums import Locale, MiddlewareEventType
+from app.core.formatters import format_log_user
 from app.db.models import UserDto
 
 from .base import EventTypedMiddleware
 
-logger = logging.getLogger(__name__)
 I18nFormatter = Callable[[str, Optional[dict[str, Any]]], str]
 
 
@@ -26,9 +25,10 @@ class I18nMiddleware(EventTypedMiddleware):
         locales: dict[Locale, FluentLocalization],
         default_locale: Locale,
     ) -> None:
+        super().__init__()
         self.locales = locales
         self.default_locale = default_locale
-        logger.debug("I18n Middleware initialized")
+        self.logger.debug(f"Available locales: {list(locales.keys())}")
 
     async def __call__(
         self,
@@ -42,17 +42,17 @@ class I18nMiddleware(EventTypedMiddleware):
 
     def get_locale(self, user: Optional[UserDto] = None) -> FluentLocalization:
         if user is None:
-            logger.debug(f"Using default locale: '{self.default_locale}'")
+            self.logger.debug(f"User not provided. Using default locale: '{self.default_locale}'")
             return self.locales[self.default_locale]
 
         if user.language not in self.locales:
-            logger.warning(
+            self.logger.warning(
                 f"Locale '{user.language}' not supported."
                 f"Using default locale: '{self.default_locale}'"
             )
             return self.locales[self.default_locale]
 
-        logger.debug(f"User {user.telegram_id} ({user.name}) using locale: '{user.language}'")
+        self.logger.debug(f"{format_log_user(user)} Using locale: '{user.language}'")
         return self.locales[user.language]
 
     def get_formatter(self, user: Optional[UserDto] = None) -> I18nFormatter:

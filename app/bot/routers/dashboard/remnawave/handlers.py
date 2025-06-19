@@ -26,6 +26,4 @@ async def start_remnawave_window(
         await callback.message.answer(f"Failed to connect to Remnawave. {response}")
         return
 
-    await dialog_manager.start(
-        DashboardRemnawave.main,
-    )
+    await dialog_manager.start(DashboardRemnawave.main)

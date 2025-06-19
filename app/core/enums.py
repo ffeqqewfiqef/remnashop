@@ -48,6 +48,20 @@ class UserRole(StrEnum):
     USER = auto()
 
 
+class PromocodeType(StrEnum):
+    DURATION = auto()
+    TRAFFIC = auto()
+    SUBSCRIPTION = auto()
+    PERSONAL_DISCOUNT = auto()
+    PURCHASE_DISCOUNT = auto()
+
+
+class MaintenanceMode(StrEnum):
+    GLOBAL = auto()
+    PURCHASE = auto()
+    OFF = auto()
+
+
 class SubscriptionStatus(StrEnum):
     pass
 

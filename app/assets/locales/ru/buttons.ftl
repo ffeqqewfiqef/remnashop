@@ -37,8 +37,7 @@ btn-user-transactions = 🧾 Транзакции
 btn-user-subscription = 💳 Подписка
 btn-user-role = { role }
 
-btn-user-block-toggle = 
-    { $is_blocked ->
+btn-user-block-toggle =  { $is_blocked ->
     [True] 🔓 Разблокировать
     *[False] 🔒 Заблокировать
 }
@@ -66,9 +65,11 @@ btn-promocodes-edit = ✏️ Изменить
 
 
 # Maintenance
-btn-maintenance-global = 🔴 Глобальный
-btn-maintenance-purchase = 🟠 Платежи
-btn-maintenance-off = ⚪ Выключить
+btn-maintenance-mode = { $mode ->
+    [global] 🔴 Глобальный
+    [purchase] 🟠 Платежи
+    *[off] ⚪ Выключить
+}
 
 
 # RemnaShop

@@ -1,21 +1,19 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
+
+if TYPE_CHECKING:
+    from app.bot.middlewares import I18nMiddleware
 
 from aiogram.types import User as AiogramUser
 
 from app.core.enums import UserRole
+from app.core.formatters import format_log_user
 from app.db import SQLSessionContext
 from app.db.models.dto import UserDto
 from app.db.models.sql import User
 
 from .base import CrudService
-
-if TYPE_CHECKING:
-    from app.bot.middlewares import I18nMiddleware
-
-logger = logging.getLogger(__name__)
 
 
 class UserService(CrudService):
@@ -37,7 +35,7 @@ class UserService(CrudService):
                 role=UserRole.DEV if is_dev else UserRole.USER,
             )
             await uow.commit(db_user)
-        logger.info(f"[User:{db_user.telegram_id} ({db_user.name})] Created in database")
+        self.logger.debug(f"{format_log_user(db_user)} Created in database")
         return db_user.dto()
 
     async def _get(
@@ -88,7 +86,7 @@ class UserService(CrudService):
                 telegram_id=user.telegram_id,
                 **user.model_state,
             )
-        logger.info(f"[User:{user.telegram_id} ({user.name})] Set is_blocked -> '{blocked}'")
+        self.logger.debug(f"{format_log_user(user)} Set is_blocked -> '{blocked}'")
 
     async def set_bot_blocked(self, user: UserDto, blocked: bool) -> None:
         user.is_bot_blocked = blocked
@@ -97,7 +95,7 @@ class UserService(CrudService):
                 telegram_id=user.telegram_id,
                 **user.model_state,
             )
-        logger.info(f"[User:{user.telegram_id} ({user.name})] Set is_bot_blocked -> '{blocked}'")
+        self.logger.debug(f"{format_log_user(user)} Set is_bot_blocked -> '{blocked}'")
 
     async def set_role(self, user: UserDto, role: UserRole) -> None:
         user.role = role
@@ -106,4 +104,4 @@ class UserService(CrudService):
                 telegram_id=user.telegram_id,
                 **user.model_state,
             )
-        logger.info(f"[User:{user.telegram_id} ({user.name})] Set role -> '{role}'")
+        self.logger.debug(f"{format_log_user(user)} Set role -> '{role}'")

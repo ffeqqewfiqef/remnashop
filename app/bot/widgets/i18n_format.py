@@ -72,7 +72,7 @@ class I18nFormat(Text):
             else:
                 mapped[key] = transformer
 
-        logger.debug(f"Transformed mapping: {mapped}")
+        logger.debug(f"Key '{self.key}' transformed mapping: {mapped}")
         return {**data, **mapped}
 
     async def _render_text(self, data: dict[str, Any], dialog_manager: DialogManager) -> str:

@@ -8,7 +8,7 @@ from app.bot.widgets import Banner, I18nFormat, IgnoreUpdate
 from app.core.enums import BannerName
 
 from .getters import admins_getter
-from .handlers import on_role_removed
+from .handlers import on_user_role_removed
 
 remnashop = Window(
     Banner(BannerName.DASHBOARD),
@@ -71,7 +71,7 @@ admins = Window(
     I18nFormat("msg-remnashop-admins"),
     Group(
         Select(
-            text=Format("{item.role} - {item.telegram_id}".capitalize()),
+            text=Format("{item.telegram_id} ({item.name})"),
             id="select_admin",
             item_id_getter=lambda item: item.telegram_id,
             items="admins",
@@ -84,7 +84,7 @@ admins = Window(
             item_id_getter=lambda item: item.telegram_id,
             items="admins",
             type_factory=int,
-            on_click=on_role_removed,
+            on_click=on_user_role_removed,
         ),
         width=2,
     ),

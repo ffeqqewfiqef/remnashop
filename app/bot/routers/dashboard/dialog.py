@@ -1,8 +1,10 @@
 from aiogram_dialog import Dialog, Window
-from aiogram_dialog.widgets.kbd import Button, Row, Start, SwitchTo
+from aiogram_dialog.widgets.kbd import Button, Column, Row, Select, Start, SwitchTo
+from aiogram_dialog.widgets.text import Format
 from magic_filter import F
 
 from app.bot.conditions import is_dev
+from app.bot.routers.dashboard.getters import maintenance_getter
 from app.bot.states import (
     Dashboard,
     DashboardBroadcast,
@@ -14,6 +16,7 @@ from app.bot.states import (
 from app.bot.widgets import Banner, I18nFormat, IgnoreUpdate
 from app.core.enums import BannerName
 
+from .handlers import on_maintenance_mode_selected
 from .remnawave.handlers import start_remnawave_window
 
 dashboard = Window(
@@ -91,20 +94,13 @@ statistics = Window(
 maintenance = Window(
     Banner(BannerName.DASHBOARD),
     I18nFormat("msg-dashboard-maintenance"),
-    Row(
-        Button(
-            I18nFormat("btn-maintenance-global"),
-            id="maintenance.global",
-        ),
-        Button(
-            I18nFormat("btn-maintenance-purchase"),
-            id="maintenance.purchase",
-        ),
-    ),
-    Row(
-        Button(
-            I18nFormat("btn-maintenance-off"),
-            id="maintenance.off",
+    Column(
+        Select(
+            text=I18nFormat("btn-maintenance-mode", mode=Format("{item}")),
+            id="maintenance.mode",
+            items="modes",
+            item_id_getter=lambda item: item.value,
+            on_click=on_maintenance_mode_selected,
         ),
     ),
     Row(
@@ -116,6 +112,7 @@ maintenance = Window(
     ),
     IgnoreUpdate(),
     state=Dashboard.maintenance,
+    getter=maintenance_getter,
 )
 
 router = Dialog(

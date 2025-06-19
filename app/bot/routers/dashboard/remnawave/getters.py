@@ -28,10 +28,14 @@ async def system_getter(
     return {  # NOTE: think about a models for translations
         "cpu_cores": stats.cpu.physical_cores,
         "cpu_threads": stats.cpu.cores,
-        "ram_used": format_bytes(stats.memory.active, i18n_formatter),
-        "ram_total": format_bytes(stats.memory.total, i18n_formatter),
-        "ram_used_percent": format_percent(stats.memory.active, stats.memory.total),
-        "uptime": format_duration(stats.uptime, i18n_formatter, True),
+        "ram_used": format_bytes(value=stats.memory.active, i18n_formatter=i18n_formatter),
+        "ram_total": format_bytes(value=stats.memory.total, i18n_formatter=i18n_formatter),
+        "ram_used_percent": format_percent(part=stats.memory.active, whole=stats.memory.total),
+        "uptime": format_duration(
+            seconds=stats.uptime,
+            i18n_formatter=i18n_formatter,
+            round_up=True,
+        ),
     }
 
 
@@ -92,18 +96,27 @@ async def nodes_getter(
         i18n_formatter(
             "msg-remnawave-node-details",
             {
-                "country": format_country_code(node.country_code),
+                "country": format_country_code(code=node.country_code),
                 "name": node.name,
                 "status": "on" if node.is_connected else "off",
                 "address": node.address,
                 "port": str(node.port),
-                "xray_uptime": format_duration(str(node.xray_uptime), i18n_formatter, True),
+                "xray_uptime": format_duration(
+                    seconds=str(node.xray_uptime),
+                    i18n_formatter=i18n_formatter,
+                    round_up=True,
+                ),
                 "users_online": str(node.users_online),
-                "traffic_used": format_bytes(
-                    node.traffic_used_bytes, i18n_formatter
-                ),  # FIXME: not for all time? (only 7 days period)
+                "traffic_used": format_bytes(  # FIXME: not for all time? (only 7 days period)
+                    value=node.traffic_used_bytes,
+                    i18n_formatter=i18n_formatter,
+                ),
                 "traffic_limit": (
-                    format_bytes(node.traffic_limit_bytes, i18n_formatter, True)
+                    format_bytes(
+                        value=node.traffic_limit_bytes,
+                        i18n_formatter=i18n_formatter,
+                        round_up=True,
+                    )
                     if node.traffic_limit_bytes > 0
                     else UNLIMITED
                 ),

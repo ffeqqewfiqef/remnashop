@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import TIMESTAMP, BigInteger, Boolean, Enum, Float, String
+from sqlalchemy import TIMESTAMP, BigInteger, Boolean, Enum, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.constants import TIMEZONE
@@ -20,8 +20,8 @@ class User(Base):
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False, default=UserRole.USER)
     language: Mapped[str] = mapped_column(String, nullable=False)
 
-    personal_discount: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    purchase_discount: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    personal_discount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    purchase_discount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_bot_blocked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

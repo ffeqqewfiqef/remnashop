@@ -11,17 +11,19 @@ DEFAULT_UPDATE_TYPES: Final[list[MiddlewareEventType]] = [
     MiddlewareEventType.CALLBACK_QUERY,
 ]
 
-logger = logging.getLogger(__name__)
-
 
 class EventTypedMiddleware(BaseMiddleware, ABC):
     __event_types__: ClassVar[list[MiddlewareEventType]] = DEFAULT_UPDATE_TYPES
+
+    def __init__(self) -> None:
+        self.logger = logging.getLogger(f"{self.__class__.__module__}")
+        self.logger.info(f"{self.__class__.__name__} initialized")
 
     def setup_inner(self, router: Router) -> None:
         for event_type in self.__event_types__:
             router.observers[event_type].middleware(self)
 
-        logger.debug(
+        self.logger.info(
             f"{self.__class__.__name__} set as inner middleware for: "
             f"{', '.join(t.value for t in self.__event_types__)}"
         )
@@ -30,7 +32,7 @@ class EventTypedMiddleware(BaseMiddleware, ABC):
         for event_type in self.__event_types__:
             router.observers[event_type].outer_middleware(self)
 
-        logger.debug(
+        self.logger.info(
             f"{self.__class__.__name__} set as outer middleware for: "
             f"{', '.join(t.value for t in self.__event_types__)}"
         )

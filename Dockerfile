@@ -45,9 +45,9 @@ FROM python:3.12-alpine AS production
 ENV VIRTUAL_ENV="/opt/pysetup/venv"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-COPY --from=app-builder $VIRTUAL_ENV $VIRTUAL_ENV
-
 WORKDIR /opt/remnashop
+
+COPY --from=app-builder $VIRTUAL_ENV $VIRTUAL_ENV
 COPY ./app ./app
 
 ENTRYPOINT ["sh", "-c"]

@@ -8,6 +8,7 @@ from aiogram_dialog.api.exceptions import UnknownState
 
 from app.bot.middlewares.i18n import I18nFormatter
 from app.bot.states import MainMenu
+from app.core.formatters import format_log_user
 from app.db.models import UserDto
 
 logger = logging.getLogger(__name__)
@@ -20,10 +21,10 @@ async def on_start_command(
     user: UserDto,
     dialog_manager: DialogManager,
 ) -> None:
-    logger.info(f"[User:{user.telegram_id} ({user.name})] Started dialog")
+    logger.info(f"{format_log_user(user)} Started dialog")
 
     await dialog_manager.start(
-        MainMenu.main,
+        state=MainMenu.main,
         mode=StartMode.RESET_STACK,
         show_mode=ShowMode.DELETE_AND_SEND,
     )
@@ -37,7 +38,7 @@ async def on_unknown_state(
     i18n_formatter: I18nFormatter,
     user: UserDto,
 ) -> None:
-    logger.warning(f"[User:{user.telegram_id} ({user.name})] Restarting dialog")
+    logger.warning(f"{format_log_user(user)} Restarting dialog")
 
     await message.answer(i18n_formatter("ntf-error-unknown-state"))  # TODO: notification service
     await on_start_command(message=message, user=user, dialog_manager=dialog_manager)
@@ -45,6 +46,6 @@ async def on_unknown_state(
 
 @router.message(Command("test"))
 async def on_test_command(message: Message, user: UserDto) -> None:
-    logger.info(f"[User:{user.telegram_id} ({user.name})] Test command executed")
+    logger.info(f"{format_log_user(user)} Test command executed")
 
     raise UnknownState("test_state")

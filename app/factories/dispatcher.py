@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.core.config import AppConfig
 
 from aiogram import Dispatcher
 from aiogram.fsm.storage.base import DefaultKeyBuilder
@@ -14,11 +16,13 @@ from app.bot.middlewares import (
     ErrorMiddleware,
     GarbageMiddleware,
     I18nMiddleware,
+    MaintenanceMiddleware,
     ThrottlingMiddleware,
     UserMiddleware,
 )
 from app.bot.models import AppContainer, ServicesContainer
 from app.bot.routers import routers
+from app.bot.services import MaintenanceService
 from app.core import mjson
 from app.db.crud import UserService
 
@@ -26,11 +30,6 @@ from .i18n import create_i18n_middleware
 from .redis import create_redis
 from .remnawave import create_remnawave
 from .session_pool import create_session_pool
-
-if TYPE_CHECKING:
-    from app.core.config import AppConfig
-
-logger = logging.getLogger(__name__)
 
 
 def create_dispatcher(config: AppConfig) -> Dispatcher:
@@ -42,20 +41,26 @@ def create_dispatcher(config: AppConfig) -> Dispatcher:
     i18n_middleware: I18nMiddleware = create_i18n_middleware(config)
     garbage_middleware = GarbageMiddleware()
     throttling_middleware = ThrottlingMiddleware()
+    maintenance_middleware = MaintenanceMiddleware()
 
-    # redis= # TODO: redis repository for cache
     session_pool = create_session_pool(config)
     remnawave = create_remnawave(config)
 
     user_service = UserService(session_pool)
-    services_container = ServicesContainer(user=user_service)
+    maintenance_service = MaintenanceService(redis)
 
-    app_container = AppContainer(
+    services = ServicesContainer(
+        maintenance=maintenance_service,
+        user=user_service,
+    )
+
+    container = AppContainer(
         config=config,
         i18n=i18n_middleware,
         session_pool=session_pool,
+        redis=redis,
         remnawave=remnawave,
-        services=services_container,
+        services=services,
     )
 
     dispatcher = Dispatcher(
@@ -65,18 +70,20 @@ def create_dispatcher(config: AppConfig) -> Dispatcher:
             json_loads=mjson.decode,
             json_dumps=mjson.encode,
         ),
-        container=app_container,
+        container=container,
     )
 
     # request -> outer -> filter -> inner -> handler #
 
-    dispatcher.message.filter(IsPrivate())
-
     error_middleware.setup_outer(router=dispatcher)
     user_middleware.setup_outer(router=dispatcher)
+    throttling_middleware.setup_outer(router=dispatcher)
+    maintenance_middleware.setup_outer(router=dispatcher)
+
+    dispatcher.message.filter(IsPrivate())
+
     i18n_middleware.setup_inner(router=dispatcher)
     garbage_middleware.setup_inner(router=dispatcher)
-    throttling_middleware.setup_outer(router=dispatcher)
 
     dispatcher.include_routers(*routers)
     setup_dialogs(router=dispatcher)

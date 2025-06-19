@@ -22,6 +22,7 @@ class Banner(StaticMedia):
             if candidate_path.exists():
                 path = candidate_path
                 content_type = format.content_type
+                logger.debug(f"Using banner file: {path} with content type: {content_type}")
                 break
 
         if path is None:

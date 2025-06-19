@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
@@ -8,5 +10,5 @@ class CrudService:
         self,
         session_pool: async_sessionmaker[AsyncSession],
     ) -> None:
-        super().__init__()
+        self.logger = logging.getLogger(f"{self.__class__.__module__}")
         self.session_pool = session_pool

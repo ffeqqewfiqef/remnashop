@@ -1,3 +1,14 @@
 services:
   remnashop:
-      build: .
+      build:
+        context: .
+        dockerfile: Dockerfile.local
+      container_name: "remnashop_local"
+      volumes:
+        - ./app:/opt/remnashop/app
+        - ./pyproject.toml:/opt/remnashop/pyproject.toml
+        - ./poetry.lock:/opt/remnashop/poetry.lock
+        - ./logs:/opt/remnashop/logs
+        - ./app/assets:/opt/remnashop/assets
+      environment:
+        - WATCHFILES_FORCE_POLLING=true

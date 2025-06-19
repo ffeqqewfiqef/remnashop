@@ -1,9 +1,19 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.bot.middlewares.i18n import I18nFormatter
+    from app.db.models.dto import UserDto
+
 from math import ceil
 from typing import Union
 
-from app.bot.middlewares.i18n import I18nFormatter
-
 from .enums import ByteUnit, TimeUnit
+
+
+def format_log_user(user: UserDto) -> str:
+    return f"[{user.role.upper()}:{user.telegram_id} ({user.name})]"
 
 
 def format_bytes(
