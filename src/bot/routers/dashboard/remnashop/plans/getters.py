@@ -80,6 +80,8 @@ async def plan_getter(dialog_manager: DialogManager, **kwargs: Any) -> dict[str,
     helpers = {
         "is_unlimited_traffic": plan.is_unlimited_traffic,
         "is_unlimited_devices": plan.is_unlimited_devices,
+        "plan_type": plan.type,
+        "availability_type": plan.availability,
     }
 
     data = plan.model_dump()

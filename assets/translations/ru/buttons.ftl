@@ -81,8 +81,11 @@ btn-broadcast-button-select = { $selected ->
     *[0] ⚪
     }
 
+
+# Go to
 btn-goto-subscription = 💳 Купить подписку
 btn-goto-promocode = 🎟 Активировать промокод
+btn-goto-subscription-renew = 🔄 Продлить подписку
 
 
 # Promocodes
@@ -146,6 +149,7 @@ btn-notifications-user-choice = { $enabled ->
     [EXPIRES_IN_2_DAYS] Подписка истекает (2 дня)
     [EXPIRES_IN_1_DAYS] Подписка истекает (1 дня)
     [EXPIRED] Подписка истекла
+    [LIMITED] Трафик исчерпан
     *[OTHER] { $type }
     }
 

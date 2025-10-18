@@ -66,13 +66,13 @@ async def on_gateway_test(
     logger.info(f"{log(user)} Testing gateway '{gateway_id}'")
 
     try:
-        payment_link = await payment_gateway_service.create_test_payment(user, gateway.type)
+        payment = await payment_gateway_service.create_test_payment(user, gateway.type)
         logger.info(f"{log(user)} Test payment successful for gateway '{gateway_id}'")
         await notification_service.notify_user(
             user=user,
             payload=MessagePayload(
                 i18n_key="ntf-gateway-test-payment-success",
-                i18n_kwargs={"url": payment_link},
+                i18n_kwargs={"url": payment.url},
             ),
         )
 

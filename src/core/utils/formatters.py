@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-import re
-from re import Match
 from typing import TYPE_CHECKING, Final, Optional, Union
-
-from src.infrastructure.database.models.dto.user import BaseUserDto
 
 if TYPE_CHECKING:
     from src.infrastructure.database.models.dto import UserDto
 
+import re
 from calendar import monthrange
 from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, ROUND_UP, Decimal
+from re import Match
+
+from loguru import logger
 
 from src.core.i18n.keys import ByteUnitKey, TimeUnitKey, UtilKey
 from src.core.utils.time import datetime_now
+from src.infrastructure.database.models.dto.user import BaseUserDto
 
 
 def format_user_log(user: Union[BaseUserDto, UserDto]) -> str:
@@ -170,38 +171,26 @@ def i18n_format_expire_time(expiry_time: timedelta) -> list[tuple[str, dict[str,
     seconds = expiry_time.seconds
     parts: list[tuple[str, dict[str, int]]] = []
 
-    # > 1 year
-    if days >= 365:
-        years, days = divmod(days, 365)
-        months, days = divmod(days, 30)
+    # Years
+    years, days = divmod(days, 365)
+    if years:
         parts.append((TimeUnitKey.YEAR, {"value": years}))
-        if months:
-            parts.append((TimeUnitKey.MONTH, {"value": months}))
-        if days:
-            parts.append((TimeUnitKey.DAY, {"value": days}))
-        return parts
 
-    # > 1 month
-    if days >= 30:
-        months, days = divmod(days, 30)
-        hours, seconds = divmod(seconds, 3600)
-        parts.append((TimeUnitKey.MONTH, {"value": months}))
-        if days:
-            parts.append((TimeUnitKey.DAY, {"value": days}))
-        if hours:
-            parts.append((TimeUnitKey.HOUR, {"value": hours}))
-        return parts
-
-    # < 30 days
-    hours, seconds = divmod(seconds, 3600)
-    minutes, _ = divmod(seconds, 60)
+    # Remaining days
     if days:
         parts.append((TimeUnitKey.DAY, {"value": days}))
+
+    # Hours
+    hours, seconds = divmod(seconds, 3600)
     if hours:
         parts.append((TimeUnitKey.HOUR, {"value": hours}))
+
+    # Minutes
+    minutes, _ = divmod(seconds, 60)
     if minutes:
         parts.append((TimeUnitKey.MINUTE, {"value": minutes}))
 
+    # Default to 1 minute if everything is zero
     return parts or [(TimeUnitKey.MINUTE, {"value": 1})]
 
 

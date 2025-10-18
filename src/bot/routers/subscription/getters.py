@@ -14,10 +14,10 @@ from src.core.utils.formatters import (
     i18n_format_limit,
     i18n_format_traffic_limit,
 )
-from src.infrastructure.database.models.dto import PlanDto, PlanSnapshotDto, UserDto
+from src.infrastructure.database.models.dto import PlanDto, UserDto
+from src.infrastructure.database.models.dto.transaction import PriceDetailsDto
 from src.services.payment_gateway import PaymentGatewayService
 from src.services.plan import PlanService
-from src.services.pricing import PricingService
 from src.services.settings import SettingsService
 
 
@@ -91,7 +91,7 @@ async def duration_getter(
         "durations": durations,
         "final_amount": 0,
         "currency": "",
-        "only_single_plan": dialog_manager.dialog_data["only_single_plan"],
+        "only_single_plan": dialog_manager.dialog_data.get("only_single_plan", False),
     }
 
 
@@ -146,7 +146,6 @@ async def confirm_getter(
     payment_gateway_service: FromDishka[PaymentGatewayService],
     **kwargs: Any,
 ) -> dict[str, Any]:
-    user: UserDto = dialog_manager.middleware_data[USER_KEY]
     adapter = DialogDataAdapter(dialog_manager)
     plan = adapter.load(PlanDto)
 
@@ -161,28 +160,9 @@ async def confirm_getter(
     if not duration or not payment_gateway:
         return {}
 
-    transaction_plan = PlanSnapshotDto(
-        id=plan.id,
-        name=plan.name,
-        type=plan.type,
-        traffic_limit=plan.traffic_limit,
-        device_limit=plan.device_limit,
-        duration=duration.days,
-        squad_ids=plan.squad_ids,
-    )
-
-    price = duration.get_price(payment_gateway.currency)
-    pricing = PricingService.calculate(user, price, payment_gateway.currency)
-    purchase_type = dialog_manager.dialog_data["purchase_type"]
-
-    result = await payment_gateway_service.create_payment(
-        user=user,
-        plan=transaction_plan,
-        pricing=pricing,
-        purchase_type=purchase_type,
-        gateway_type=selected_payment_method,
-    )
-    dialog_manager.dialog_data["payment_id"] = result.payment_id
+    result_url = dialog_manager.dialog_data["payment_url"]
+    pricing_data = dialog_manager.dialog_data["final_pricing"]
+    pricing = PriceDetailsDto.model_validate_json(pricing_data)
 
     key, kw = i18n_format_days(duration.days)
     gateways = await payment_gateway_service.filter_active()
@@ -198,7 +178,7 @@ async def confirm_getter(
         "discount_percent": pricing.discount_percent,
         "original_amount": pricing.original_amount,
         "currency": payment_gateway.currency.symbol,
-        "url": result.pay_url,
+        "url": result_url,
         "only_single_gateway": len(gateways) == 1,
     }
 

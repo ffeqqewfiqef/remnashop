@@ -47,7 +47,7 @@ class SubscriptionService(BaseService):
             telegram_id=user.telegram_id,
             subscription_id=db_created_subscription.id,
         )
-        logger.info(f"Created subscription '{subscription.id}' for user '{user.telegram_id}'")
+        logger.info(f"Created subscription '{db_subscription.id}' for user '{user.telegram_id}'")
         return SubscriptionDto.from_model(db_created_subscription)  # type: ignore[return-value]
 
     async def get_current(self, telegram_id: int) -> Optional[SubscriptionDto]:

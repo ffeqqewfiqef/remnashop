@@ -11,6 +11,7 @@ from loguru import logger
 
 from src.core.enums import TransactionStatus
 from src.infrastructure.database.models.dto import PaymentGatewayDto
+from src.infrastructure.database.models.dto.payment_gateway import PaymentResult
 
 
 class PaymentGatewayFactory(Protocol):
@@ -38,10 +39,9 @@ class BasePaymentGateway(ABC):
     @abstractmethod
     async def handle_create_payment(
         self,
-        payment_id: UUID,
         amount: Decimal,
         details: str,
-    ) -> str: ...
+    ) -> PaymentResult: ...
 
     @abstractmethod
     async def handle_webhook(self, request: Request) -> tuple[UUID, TransactionStatus]: ...

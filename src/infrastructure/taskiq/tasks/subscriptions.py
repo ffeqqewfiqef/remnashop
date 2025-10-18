@@ -1,5 +1,7 @@
+import traceback
 from typing import Optional
 
+from aiogram.utils.formatting import Text
 from dishka import FromDishka
 from dishka.integrations.taskiq import inject
 from loguru import logger
@@ -9,6 +11,7 @@ from src.core.enums import PurchaseType, SubscriptionStatus
 from src.core.utils.formatters import format_bytes_to_gb, format_device_count
 from src.infrastructure.database.models.dto import PlanSnapshotDto, SubscriptionDto, UserDto
 from src.infrastructure.taskiq.broker import broker
+from src.infrastructure.taskiq.tasks.notifications import send_error_notification_task
 from src.services.remnawave import RemnawaveService
 from src.services.subscription import SubscriptionService
 from src.services.user import UserService
@@ -45,9 +48,7 @@ async def purchase_subscription_task(
 
         elif purchase_type == PurchaseType.RENEW:
             if not subscription:
-                logger.error(f"No subscription found for renewal for user {user.telegram_id}")
-                await redirect_to_failed_payment_task.kiq(user, purchase_type)
-                return
+                raise Exception(f"No subscription found for renewal for user {user.telegram_id}")
 
             updated_user = await remnawave_service.updated_user(
                 user=user,
@@ -61,9 +62,10 @@ async def purchase_subscription_task(
 
         elif purchase_type == PurchaseType.CHANGE:
             if not subscription:
-                logger.error(f"No subscription found for change for user {user.telegram_id}")
-                await redirect_to_failed_payment_task.kiq(user, purchase_type)
-                return
+                raise Exception(f"No subscription found for change for user {user.telegram_id}")
+
+            subscription.status = SubscriptionStatus.DISABLED
+            await subscription_service.update(subscription)
 
             updated_user = await remnawave_service.updated_user(
                 user=user,
@@ -81,9 +83,7 @@ async def purchase_subscription_task(
             logger.debug(f"Changed subscription for user {user.telegram_id}")
 
         else:
-            logger.error(f"Unknown purchase type '{purchase_type}' for user {user.telegram_id}")
-            await redirect_to_failed_payment_task.kiq(user, purchase_type)
-            return
+            raise Exception(f"Unknown purchase type '{purchase_type}' for user {user.telegram_id}")
 
         await redirect_to_successed_payment_task.kiq(user, purchase_type)
         logger.info(
@@ -94,7 +94,22 @@ async def purchase_subscription_task(
         logger.exception(
             f"Failed to process {purchase_type=} for user {user.telegram_id}: {exception}"
         )
-        await redirect_to_failed_payment_task.kiq(user, purchase_type)
+        traceback_str = traceback.format_exc()
+        error_type_name = type(exception).__name__
+        error_message = Text(str(exception)[:512])
+
+        await send_error_notification_task.kiq(
+            error_id=user.telegram_id,
+            traceback_str=traceback_str,
+            i18n_kwargs={
+                "user": True,
+                "id": str(user.telegram_id),
+                "name": user.name,
+                "error": f"{error_type_name}: {error_message.as_html()}",
+            },
+        )
+
+        await redirect_to_failed_payment_task.kiq(user)
 
 
 @broker.task

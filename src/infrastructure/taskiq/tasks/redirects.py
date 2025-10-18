@@ -1,5 +1,5 @@
 from aiogram import Bot
-from aiogram_dialog import BgManagerFactory, StartMode
+from aiogram_dialog import BgManagerFactory, ShowMode, StartMode
 from dishka import FromDishka
 from dishka.integrations.taskiq import inject
 
@@ -21,7 +21,11 @@ async def redirect_to_main_menu_task(
         user_id=user.telegram_id,
         chat_id=user.telegram_id,
     )
-    await bg_manager.start(state=MainMenu.MAIN, mode=StartMode.RESET_STACK)
+    await bg_manager.start(
+        state=MainMenu.MAIN,
+        mode=StartMode.RESET_STACK,
+        show_mode=ShowMode.DELETE_AND_SEND,
+    )
 
 
 @broker.task
@@ -40,6 +44,8 @@ async def redirect_to_successed_payment_task(
     await bg_manager.start(
         state=Subscription.SUCCESS,
         data={"purchase_type": purchase_type},
+        mode=StartMode.RESET_STACK,
+        show_mode=ShowMode.DELETE_AND_SEND,
     )
 
 
@@ -55,4 +61,8 @@ async def redirect_to_failed_payment_task(
         user_id=user.telegram_id,
         chat_id=user.telegram_id,
     )
-    await bg_manager.start(state=Subscription.FAILED)
+    await bg_manager.start(
+        state=Subscription.FAILED,
+        mode=StartMode.RESET_STACK,
+        show_mode=ShowMode.DELETE_AND_SEND,
+    )

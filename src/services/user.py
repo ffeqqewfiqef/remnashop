@@ -6,7 +6,6 @@ from aiogram.types import User as AiogramUser
 from fluentogram import TranslatorHub
 from loguru import logger
 from redis.asyncio import Redis
-from sqlalchemy import and_
 
 from src.core.config import AppConfig
 from src.core.constants import (
@@ -139,13 +138,13 @@ class UserService(BaseService):
         logger.debug(f"Retrieved {len(db_users)} users for query '{query}'")
         return UserDto.from_model_list(db_users)
 
-    @redis_cache(prefix="users_count", ttl=TIME_1M)
+    @redis_cache(prefix="users_count", ttl=TIME_10M)
     async def count(self) -> int:
         count = await self.uow.repository.users.count()
         logger.debug(f"Total users count: '{count}'")
         return count
 
-    @redis_cache(prefix="get_by_role", ttl=TIME_1M)
+    @redis_cache(prefix="get_by_role", ttl=TIME_10M)
     async def get_by_role(self, role: UserRole) -> list[UserDto]:
         db_users = await self.uow.repository.users.filter_by_role(role)
         logger.debug(f"Retrieved {len(db_users)} users with role '{role}'")
@@ -157,7 +156,7 @@ class UserService(BaseService):
         logger.debug(f"Retrieved {len(db_users)} blocked users")
         return UserDto.from_model_list(db_users)
 
-    @redis_cache(prefix="get_all", ttl=TIME_1M)
+    @redis_cache(prefix="get_all", ttl=TIME_10M)
     async def get_all(self) -> list[UserDto]:
         db_users = await self.uow.repository.users._get_many(User)
         logger.debug(f"Retrieved {len(db_users)} users")

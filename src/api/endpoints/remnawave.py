@@ -6,9 +6,9 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from loguru import logger
 from remnawave.controllers import WebhookUtility
-from remnawave.models.webhook import HwidUserDeviceDto as RemnaHwidUserDeviceDto
 from remnawave.models.webhook import NodeDto as RemnaNodeDto
 from remnawave.models.webhook import UserDto as RemnaUserDto
+from remnawave.models.webhook import UserHwidDeviceEventDto
 
 from src.core.config.app import AppConfig
 from src.core.constants import API_V1, REMNAWAVE_WEBHOOK_PATH
@@ -46,8 +46,9 @@ async def remnawave_webhook(
         await remnawave_service.handle_user_event(payload.event, user)
 
     elif WebhookUtility.is_user_hwid_devices_event(payload.event):
-        device = cast(RemnaHwidUserDeviceDto, WebhookUtility.get_typed_data(payload))
-        await remnawave_service.handle_device_event(payload.event, device)
+        # FIXME: dto
+        event = cast(UserHwidDeviceEventDto, WebhookUtility.get_typed_data(payload))
+        await remnawave_service.handle_device_event(payload.event, event.data["hwidUserDevice"])
 
     elif WebhookUtility.is_node_event(payload.event):
         node = cast(RemnaNodeDto, WebhookUtility.get_typed_data(payload))

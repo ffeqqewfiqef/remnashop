@@ -20,7 +20,7 @@ btn-remnashop-donate = Поддержать разработчика
 
 
 # Payment
-payment-invoice-description = { $name } { $traffic } { $devices } { $duration }
+payment-invoice-description = Подписка { $name } на { $duration }
 
 
 # Commands
@@ -101,12 +101,23 @@ plan-type = { $plan_type ->
     *[OTHER] { $plan_type }
 }
 
+availability-type = { $availability_type -> 
+    [ALL] Для всех
+    [NEW] Для новых
+    [EXISTING] Для существующих
+    [INVITED] Для приглашенных
+    [ALLOWED] Для разрешенных
+    [TRIAL] Для пробника
+    *[OTHER] { $availability_type }
+}
+
 gateway-type = { $gateway_type ->
     [TELEGRAM_STARS] Telegram Stars
     [YOOKASSA] ЮKassa
     [YOOMONEY] ЮMoney
     [CRYPTOMUS] Cryptomus
     [HELEKET] Heleket
+    [URLPAY] UrlPay
     *[OTHER] { $gateway_type }
 }
 

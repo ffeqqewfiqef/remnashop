@@ -1,3 +1,4 @@
+import uuid
 from decimal import Decimal
 from typing import Any, Final
 from uuid import UUID
@@ -10,6 +11,7 @@ from loguru import logger
 
 from src.core.enums import TransactionStatus, YookassaVatCode
 from src.infrastructure.database.models.dto import PaymentGatewayDto, YookassaGatewaySettingsDto
+from src.infrastructure.database.models.dto.payment_gateway import PaymentResult
 
 from .base import BasePaymentGateway
 
@@ -52,8 +54,8 @@ class YookassaGateway(BasePaymentGateway):
             headers={"Content-Type": "application/json"},
         )
 
-    async def handle_create_payment(self, payment_id: UUID, amount: Decimal, details: str) -> str:
-        headers = {"Idempotence-Key": str(payment_id)}
+    async def handle_create_payment(self, amount: Decimal, details: str) -> PaymentResult:
+        headers = {"Idempotence-Key": str(uuid.uuid4())}
         payload = await self._create_payment_payload(str(amount), details)
 
         try:
@@ -61,8 +63,7 @@ class YookassaGateway(BasePaymentGateway):
             response = await self._client.post("", headers=headers, content=content)
             response.raise_for_status()
             data = orjson.loads(response.content)
-            pay_url = self._get_payment_url(data)
-            return pay_url
+            return self._get_payment_data(data)
 
         except HTTPStatusError as exception:
             logger.error(
@@ -87,7 +88,7 @@ class YookassaGateway(BasePaymentGateway):
 
         try:
             webhook_data = orjson.loads(await request.body())
-            logger.debug("Yookassa webhook:", webhook_data)
+            logger.debug(f"Yookassa webhook: {webhook_data}")
 
             if not isinstance(webhook_data, dict):
                 raise ValueError
@@ -105,9 +106,9 @@ class YookassaGateway(BasePaymentGateway):
                 raise ValueError("Invalid UUID format for payment ID")
 
             match status_str:
-                case "payment.succeeded":
+                case "succeeded":
                     transaction_status = TransactionStatus.COMPLETED
-                case "payment.canceled":
+                case "canceled":
                     transaction_status = TransactionStatus.CANCELED
                 case _:
                     logger.info(f"Ignoring webhook status: {status_str}")
@@ -140,11 +141,16 @@ class YookassaGateway(BasePaymentGateway):
             },
         }
 
-    def _get_payment_url(self, data: dict[str, Any]) -> str:
-        confirmation: dict = data.get("confirmation", {})
-        pay_url = confirmation.get("confirmation_url")
+    def _get_payment_data(self, data: dict[str, Any]) -> PaymentResult:
+        payment_id_str = data.get("id")
 
-        if not pay_url:
+        if not payment_id_str:
+            raise KeyError("Invalid response from Yookassa API: missing 'id'")
+
+        confirmation: dict = data.get("confirmation", {})
+        payment_url = confirmation.get("confirmation_url")
+
+        if not payment_url:
             raise KeyError("Invalid response from Yookassa API: missing 'confirmation_url'")
 
-        return str(pay_url)
+        return PaymentResult(id=UUID(payment_id_str), url=str(payment_url))

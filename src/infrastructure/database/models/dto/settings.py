@@ -28,6 +28,7 @@ class UserNotificationDto(TrackableDto):
     expires_in_2_days: bool = True
     expires_in_1_days: bool = True
     expired: bool = True
+    limited: bool = True
 
     def is_enabled(self, ntf_type: UserNotificationType) -> bool:
         return getattr(self, ntf_type.value.lower(), False)

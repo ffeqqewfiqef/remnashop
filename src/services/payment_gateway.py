@@ -179,17 +179,23 @@ class PaymentGatewayService(BaseService):
         gateway_instance = await self._get_gateway_instance(gateway_type)
 
         i18n = self.translator_hub.get_translator_by_locale(locale=user.language)
+        key, kw = i18n_format_days(plan.duration)
         details = i18n.get(
             "payment-invoice-description",
             name=plan.name,
-            traffic=plan.traffic_limit,
-            devices=plan.device_limit,
-            duration=plan.duration,
+            duration=i18n.get(key, **kw),
         )
 
-        payment_id = uuid.uuid4()
+        if pricing.is_free:
+            logger.info(f"{log(user)} Free transaction")
+            return PaymentResult(id=uuid.uuid4())
+
+        payment: PaymentResult = await gateway_instance.handle_create_payment(
+            amount=pricing.final_amount,
+            details=details,
+        )
         transaction = TransactionDto(
-            payment_id=payment_id,
+            payment_id=payment.id,
             status=TransactionStatus.PENDING,
             purchase_type=purchase_type,
             gateway_type=gateway_instance.gateway.type,
@@ -198,21 +204,16 @@ class PaymentGatewayService(BaseService):
             plan=plan,
         )
         await self.transaction_service.create(user, transaction)
-        logger.info(f"{log(user)} Created transaction '{payment_id}'")
 
-        if pricing.is_free:
-            logger.info(f"{log(user)} Free transaction")
-            return PaymentResult(payment_id=payment_id)
+        logger.info(f"{log(user)} Created transaction '{payment.id}'")
+        logger.info(f"{log(user)} Payment link: '{payment.url}'")
+        return payment
 
-        pay_url = await gateway_instance.handle_create_payment(
-            payment_id=payment_id,
-            amount=pricing.final_amount,
-            details=details,
-        )
-        logger.info(f"{log(user)} Payment link created: '{pay_url}'")
-        return PaymentResult(payment_id=payment_id, pay_url=pay_url)
-
-    async def create_test_payment(self, user: UserDto, gateway_type: PaymentGatewayType) -> str:
+    async def create_test_payment(
+        self,
+        user: UserDto,
+        gateway_type: PaymentGatewayType,
+    ) -> PaymentResult:
         gateway_instance = await self._get_gateway_instance(gateway_type)
         i18n = self.translator_hub.get_translator_by_locale(locale=user.language)
         test_details = i18n.get("test-payment")
@@ -228,8 +229,13 @@ class PaymentGatewayService(BaseService):
             duration=-1,
             squad_ids=[],
         )
+
+        test_payment: PaymentResult = await gateway_instance.handle_create_payment(
+            amount=test_pricing.final_amount,
+            details=test_details,
+        )
         test_transaction = TransactionDto(
-            payment_id=test_payment_id,
+            payment_id=test_payment.id,
             status=TransactionStatus.PENDING,
             purchase_type=PurchaseType.NEW,
             gateway_type=gateway_instance.gateway.type,
@@ -239,14 +245,13 @@ class PaymentGatewayService(BaseService):
             plan=test_plan,
         )
         await self.transaction_service.create(user, test_transaction)
-        logger.info(f"{log(user)} Created test transaction '{test_payment_id}'")
 
-        logger.info(f"Created test payment '{test_payment_id}' for gateway '{gateway_type}'")
-        return await gateway_instance.handle_create_payment(
-            payment_id=test_payment_id,
-            amount=test_pricing.final_amount,
-            details=test_details,
+        logger.info(f"{log(user)} Created test transaction '{test_payment_id}'")
+        logger.info(
+            f"Created test payment '{test_payment.id}' for gateway '{gateway_type}', "
+            f"link: '{test_payment.url}'"
         )
+        return test_payment
 
     async def handle_payment_succeeded(self, payment_id: UUID) -> None:
         transaction = await self.transaction_service.get(payment_id)
@@ -301,9 +306,9 @@ class PaymentGatewayService(BaseService):
         i18n_kwargs = {
             "payment_id": transaction.payment_id,
             "gateway_type": transaction.gateway_type,
-            "final_amount": transaction.pricing.final_amount.normalize(),
+            "final_amount": transaction.pricing.final_amount,
             "discount_percent": transaction.pricing.discount_percent,
-            "original_amount": transaction.pricing.original_amount.normalize(),
+            "original_amount": transaction.pricing.original_amount,
             "currency": transaction.currency.symbol,
             "user_id": str(transaction.user.telegram_id),
             "user_name": transaction.user.name,

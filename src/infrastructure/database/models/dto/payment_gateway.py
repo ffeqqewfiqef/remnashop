@@ -9,8 +9,8 @@ from .base import TrackableDto
 
 
 class PaymentResult(TrackableDto):
-    payment_id: UUID
-    pay_url: Optional[str] = None
+    id: UUID
+    url: Optional[str] = None
 
 
 class PaymentGatewayDto(TrackableDto):

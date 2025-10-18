@@ -2,7 +2,7 @@ import asyncio
 from typing import Any, Optional, cast
 
 from aiogram import Bot
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from fluentogram import TranslatorHub
 from loguru import logger
@@ -239,18 +239,26 @@ class NotificationService(BaseService):
         locale: Locale,
         chat_id: int,
     ) -> Optional[AnyKeyboard]:
+        if reply_markup is None:
+            if add_close_button and auto_delete_after is None:
+                close_button = self._get_close_notification_button(locale=locale)
+                return self._get_close_notification_keyboard(close_button)
+            return None
+
         if not add_close_button or auto_delete_after is not None:
-            return reply_markup
+            return self._translate_keyboard_texts(reply_markup, locale)
 
         close_button = self._get_close_notification_button(locale=locale)
 
-        if reply_markup is None:
-            return self._get_close_notification_keyboard(close_button)
-
         if isinstance(reply_markup, InlineKeyboardMarkup):
-            builder = InlineKeyboardBuilder.from_markup(reply_markup)
+            translated_markup = self._translate_keyboard_texts(reply_markup, locale)
+            translated_markup = cast(InlineKeyboardMarkup, translated_markup)
+            builder = InlineKeyboardBuilder.from_markup(translated_markup)
             builder.row(close_button)
             return builder.as_markup()
+
+        if isinstance(reply_markup, ReplyKeyboardMarkup):
+            return self._translate_keyboard_texts(reply_markup, locale)
 
         logger.warning(
             f"Unsupported reply_markup type '{type(reply_markup).__name__}' "
@@ -290,7 +298,7 @@ class NotificationService(BaseService):
         self,
         locale: Locale,
         i18n_key: str,
-        i18n_kwargs: dict[str, Any],
+        i18n_kwargs: dict[str, Any] = {},
     ) -> str:
         if not i18n_key:
             return i18n_key
@@ -298,6 +306,45 @@ class NotificationService(BaseService):
         i18n = self.translator_hub.get_translator_by_locale(locale=locale)
         kwargs = get_translated_kwargs(i18n, i18n_kwargs)
         return i18n_format_collapse_tags(i18n.get(i18n_key, **kwargs))
+
+    def _translate_keyboard_texts(self, keyboard: AnyKeyboard, locale: Locale) -> AnyKeyboard:  # noqa: C901
+        if isinstance(keyboard, InlineKeyboardMarkup):
+            new_inline_keyboard = []
+
+            for row_inline in keyboard.inline_keyboard:
+                new_row_inline = []
+                for button_inline in row_inline:
+                    if button_inline.text:
+                        try:
+                            button_inline.text = self._get_translated_text(
+                                locale, button_inline.text
+                            )
+                        except Exception:
+                            button_inline.text = button_inline.text
+                    new_row_inline.append(button_inline)
+                new_inline_keyboard.append(new_row_inline)
+
+            return InlineKeyboardMarkup(inline_keyboard=new_inline_keyboard)
+
+        elif isinstance(keyboard, ReplyKeyboardMarkup):
+            new_keyboard = []
+
+            for row in keyboard.keyboard:
+                new_row = []
+                for button in row:
+                    if button.text:
+                        try:
+                            button.text = self._get_translated_text(locale, button.text)
+                        except Exception:
+                            button.text = button.text
+                    new_row.append(button)
+                new_keyboard.append(new_row)
+
+            return ReplyKeyboardMarkup(
+                keyboard=new_keyboard, **keyboard.model_dump(exclude={"keyboard"})
+            )
+
+        return keyboard
 
     def _get_temp_dev(self) -> UserDto:
         temp_dev = UserDto(

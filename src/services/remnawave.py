@@ -11,9 +11,12 @@ from remnawave.models import (
     UpdateUserRequestDto,
     UserResponseDto,
 )
-from remnawave.models.webhook import HwidUserDeviceDto as RemnaHwidUserDeviceDto
+from remnawave.models.webhook import (
+    HwidUserDeviceDto as RemnaHwidUserDeviceDto,
+)
 from remnawave.models.webhook import NodeDto as RemnaNodeDto
 from remnawave.models.webhook import UserDto as RemnaUserDto
+from remnawave.models.webhook import UserHwidDeviceEventDto
 
 from src.core.config import AppConfig
 from src.core.constants import REMNASHOP_PREFIX
@@ -38,6 +41,7 @@ from src.infrastructure.database.models.dto import PlanSnapshotDto, UserDto
 from src.infrastructure.redis import RedisRepository
 from src.infrastructure.taskiq.tasks.notifications import (
     send_subscription_expire_notification_task,
+    send_subscription_limited_notification_task,
     send_system_notification_task,
 )
 
@@ -89,10 +93,11 @@ class RemnawaveService(BaseService):
         user: UserDto,
         plan: PlanSnapshotDto,
         uuid: UUID,
+        reset_traffic: bool = True,
     ) -> UserResponseDto:
         logger.info(f"{log(user)} Updating Remnawave user '{uuid}' for plan '{plan.name}'")
 
-        created_user = await self.remnawave.users.update_user(
+        updated_user = await self.remnawave.users.update_user(
             UpdateUserRequestDto(
                 uuid=uuid,
                 active_internal_squads=[str(uid) for uid in plan.squad_ids],
@@ -106,13 +111,16 @@ class RemnawaveService(BaseService):
                 # traffic_limit_strategy=,
             )
         )
+        if reset_traffic:
+            logger.info(f"{log(user)} Reseted traffic for Remnawave user '{uuid}'")
+            await self.remnawave.users.reset_user_traffic(str(uuid))
 
-        if not isinstance(created_user, UserResponseDto):
+        if not isinstance(updated_user, UserResponseDto):
             logger.critical(f"{log(user)} Failed to update Remnawave user '{uuid}'")
             raise ValueError
 
         logger.info(f"{log(user)} Remnawave user '{uuid}' updated successfully")
-        return created_user
+        return updated_user
 
     async def delete_user(self, user: UserDto) -> bool:
         logger.info(f"{log(user)} Deleting Remnawave user '{user.telegram_id}'")
@@ -194,6 +202,17 @@ class RemnawaveService(BaseService):
                 user_telegram_id=remna_user.telegram_id,
                 status=SubscriptionStatus(remna_user.status),
             )
+            if event == RemnaUserEvent.LIMITED:
+                await send_subscription_limited_notification_task.kiq(
+                    remna_user=remna_user,
+                    i18n_kwargs=i18n_kwargs,
+                )
+            elif event == RemnaUserEvent.EXPIRED:
+                await send_subscription_expire_notification_task.kiq(
+                    remna_user=remna_user,
+                    ntf_type=event,
+                    i18n_kwargs=i18n_kwargs,
+                )
 
         elif event == RemnaUserEvent.FIRST_CONNECTED:
             logger.debug(f"User '{remna_user.uuid}' connected for the first time")

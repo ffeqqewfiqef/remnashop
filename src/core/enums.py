@@ -95,7 +95,7 @@ class MediaType(UpperStrEnum):
                 return bot_instance.send_document
 
 
-class SystemNotificationType(UpperStrEnum):
+class SystemNotificationType(UpperStrEnum):  # == SystemNotificationDto
     BOT_LIFETIME = auto()
     USER_REGISTERED = auto()
     SUBSCRIPTION = auto()
@@ -106,11 +106,12 @@ class SystemNotificationType(UpperStrEnum):
     USER_HWID = auto()
 
 
-class UserNotificationType(UpperStrEnum):
+class UserNotificationType(UpperStrEnum):  # == UserNotificationDto
     EXPIRES_IN_3_DAYS = auto()
     EXPIRES_IN_2_DAYS = auto()
     EXPIRES_IN_1_DAYS = auto()
     EXPIRED = auto()
+    LIMITED = auto()
 
 
 class UserRoleHierarchy(Enum):

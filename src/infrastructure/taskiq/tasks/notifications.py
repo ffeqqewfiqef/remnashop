@@ -7,6 +7,7 @@ from dishka.integrations.taskiq import inject
 from loguru import logger
 from remnawave.models.webhook import UserDto as RemnaUserDto
 
+from src.bot.keyboards import get_renew_keyboard
 from src.core.constants import BATCH_DELAY, BATCH_SIZE
 from src.core.enums import MediaType, SystemNotificationType, UserNotificationType
 from src.core.utils.iterables import chunked
@@ -138,10 +139,40 @@ async def send_subscription_expire_notification_task(
         payload=MessagePayload(
             i18n_key=i18n_key,
             i18n_kwargs={**i18n_kwargs, **i18n_kwargs_extra},
+            reply_markup=get_renew_keyboard(),
             auto_delete_after=None,
             add_close_button=True,
         ),
         ntf_type=ntf_type,
+    )
+
+
+@broker.task
+@inject
+async def send_subscription_limited_notification_task(
+    remna_user: RemnaUserDto,
+    i18n_kwargs: dict[str, Any],
+    user_service: FromDishka[UserService],
+    notification_service: FromDishka[NotificationService],
+) -> None:
+    if not remna_user.telegram_id:
+        logger.warning(
+            f"Skipping user notification for UUID {remna_user.uuid}: missing telegram_id"
+        )
+        return
+
+    user = await user_service.get(remna_user.telegram_id)
+
+    await notification_service.notify_user(
+        user=user,
+        payload=MessagePayload(
+            i18n_key="ntf-event-user-limited",
+            i18n_kwargs=i18n_kwargs,
+            reply_markup=get_renew_keyboard(),
+            auto_delete_after=None,
+            add_close_button=True,
+        ),
+        ntf_type=UserNotificationType.LIMITED,
     )
 
 

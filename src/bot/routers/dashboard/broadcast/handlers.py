@@ -238,7 +238,7 @@ async def on_send(
     if last_click_str:
         last_click = datetime.fromisoformat(last_click_str.replace("Z", "+00:00"))
         if now - last_click < timedelta(seconds=10):
-            # TODO: start broadcast
+            # TODO: Start broadcast
             dialog_manager.dialog_data.pop(key, None)
             return
 

@@ -155,7 +155,7 @@ ntf-event-node-traffic =
 
 ntf-event-user-info =
     <blockquote>
-    • <b>UUID пользователя</b>: <code>{ $uuid }</code>
+    • <b>UUID</b>: <code>{ $uuid }</code>
     • <b>ID</b>: <code>{ $telegram_id }</code>
     • <b>Статус</b>: { $status }
 
@@ -191,12 +191,16 @@ ntf-event-user-expires =
 ntf-event-user-expired =
     <b>⛔ Внимание! Доступ приостановлен — VPN не работает.</b>
 
-    Ваша подписка истекла, продлите её, чтобы продолжить пользоваться VPN.
+    Ваша подписка истекла, продлите её, чтобы продолжить пользоваться VPN!
 
+ntf-event-user-limited =
+    <b>⛔ Внимание! Доступ приостановлен — VPN не работает.</b>
+
+    Вы исчерпали лимит трафика, продлите подписку, чтобы продолжить пользоваться VPN!
 
 ntf-event-user-hwid =
     <blockquote>
-    • <b>UUID пользователя</b>: <code>{ $user_uuid }</code>
+    • <b>UUID</b>: <code>{ $user_uuid }</code>
     • <b>HWID</b>: <code>{ $hwid }</code>
 
     • <b>Платформа</b>: { $platform }
@@ -275,7 +279,7 @@ ntf-gateway-test-payment-confirm = <i>✅ Тестовый платеж успе
 ntf-subscription-plans-not-available = <i>❌ Нет доступных планов</i>
 ntf-subscription-gateways-not-available = <i>❌ Нет доступных платежных систем</i>
 ntf-subscription-renew-plan-mismatch = <i>❌ Ваш план устарел и не доступен для продления</i>
-
+ntf-subscription-payment-creation-failed = <i>❌ Произошла ошибка при создании платежа, попробуйте позже</i>
 
 ntf-broadcast-audience-not-available = <i>❌ Нет доступных пользователей для выбранной аудитории</i>
 ntf-broadcast-plans-not-available = <i>❌ Нет доступных планов</i>
