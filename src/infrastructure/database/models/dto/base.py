@@ -74,7 +74,15 @@ class TrackableDto(BaseDto):
         return value
 
     def prepare_init_data(self, encrypt: bool = False) -> dict[str, Any]:
-        return {k: self._process_value(v, encrypt) for k, v in self.model_dump().items()}
+        return {
+            k: self._process_value(v, encrypt)
+            for k, v in self.model_dump().items()
+            if not k.startswith("_")
+        }
 
     def prepare_changed_data(self, encrypt: bool = False) -> dict[str, Any]:
-        return {k: self._process_value(v, encrypt) for k, v in self.changed_data.items()}
+        return {
+            k: self._process_value(v, encrypt)
+            for k, v in self.changed_data.items()
+            if not k.startswith("_")
+        }
