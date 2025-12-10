@@ -183,8 +183,9 @@
     sudo curl -fsSL https://get.docker.com | sh
     ```
 
-> [!WARNING] The latest version of the bot is compatible only with RemnaWave panel version 2.3.*
-> **Before installation, make sure your panel matches this version.**
+> [!WARNING]
+> **The latest version of the bot is compatible only with RemnaWave panel version 2.3.\***  
+> Before installation, make sure your panel matches this version.
 
 
 ## Step 1 – Download required files
