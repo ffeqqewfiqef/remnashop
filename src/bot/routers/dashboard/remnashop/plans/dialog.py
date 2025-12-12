@@ -17,7 +17,6 @@ from magic_filter import F
 from remnawave.enums.users import TrafficLimitStrategy
 
 from src.bot.keyboards import main_menu_button
-from src.bot.routers.extra.test import show_dev_popup
 from src.bot.states import DashboardRemnashop, RemnashopPlans
 from src.bot.widgets import Banner, I18nFormat, IgnoreUpdate
 from src.core.enums import BannerName, Currency, PlanAvailability, PlanType
@@ -285,7 +284,6 @@ plan_tag = Window(
     getter=tag_getter,
 )
 
-
 plan_type = Window(
     Banner(BannerName.DASHBOARD),
     I18nFormat("msg-plan-type"),
@@ -380,7 +378,6 @@ plan_devices = Window(
     IgnoreUpdate(),
     state=RemnashopPlans.DEVICES,
 )
-
 
 plan_durations = Window(
     Banner(BannerName.DASHBOARD),
@@ -525,11 +522,10 @@ plan_squads = Window(
         ),
     ),
     Row(
-        Button(
+        SwitchTo(
             text=I18nFormat("btn-plan-external-squads"),
             id="external",
-            # state=RemnashopPlans.EXTERNAL_SQUADS,
-            on_click=show_dev_popup,
+            state=RemnashopPlans.EXTERNAL_SQUADS,
         ),
     ),
     Row(

@@ -204,7 +204,7 @@ def get_transactions_statistics(
             daily_income=stats["daily"],
             weekly_income=stats["weekly"],
             monthly_income=stats["monthly"],
-            average_check=(stats["total"] / max(1, stats["paid_count"])),
+            average_check=round(stats["total"] / max(1, stats["paid_count"])),
             total_discounts=stats["discount"],
             currency=Currency.from_gateway_type(PaymentGatewayType(gateway)).symbol,
         )
@@ -251,7 +251,7 @@ def get_subscriptions_statistics(
             if s.device_limit != -1:
                 total_devices += 1
 
-        elif s.status == SubscriptionStatus.EXPIRED:
+        elif s.get_status == SubscriptionStatus.EXPIRED:
             total_expire_subscriptions += 1
 
     return {

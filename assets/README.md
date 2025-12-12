@@ -14,9 +14,12 @@ The banner system supports **localized versions**. A banner corresponding to the
 
 ### How it works:
 
+When loading a banner, the system performs the following search steps:
 1.  **User's locale:** The system first attempts to find a banner in the folder corresponding to the current user's locale (e.g., `en`). Available locales are defined by the `APP_LOCALES` environment variable.
-2.  **Fallback:** If a banner is not found in the user's locale (or the locale folder itself is missing), the system automatically searches for a banner in the **default locale**, specified by the `APP_DEFAULT_LOCALE` environment variable.
-3.  **Placeholder banner:** If a banner is not found in either the user's locale or the default locale, a placeholder banner named `default.jpg` will be used. This file must be located directly in the root `banners` directory.
+2.  **Default (inside user’s locale):** If the specific banner is not found, the system checks for `default.{format}` inside the same locale folder.
+3.  **Fallback (default locale):** If neither the banner nor `default.{format}` exists in the user’s locale (or if the locale folder itself is missing), the system searches for the banner in the default locale specified
+by the `APP_DEFAULT_LOCALE` environment variable.
+4.  **Placeholder banner:** If a banner is not found in either the user's locale or the default locale, a placeholder banner named `default.jpg` will be used. This file must be located directly in the root `banners` directory.
 
 This ensures that even if a specific banner or locale is not found, some banner will always be displayed, preventing empty or missing images.
 
@@ -37,17 +40,19 @@ Banner filenames must correspond to the following predefined names, specified in
 * **`DEFAULT`**: The default banner, used when a specific banner is not found.
 * **`MENU`**: The main menu banner.
 * **`DASHBOARD`**: The dashboard banner.
+* **`SUBSCRIPTION`**: The subscription banner.
+* **`REFERRAL`**: The referral banner.
 
 ## Example file structure
 
 ```
 banners/
 ├── en/
-│   ├── MENU.jpg
-│   └── DASHBOARD.jpg
+│   ├── menu.jpg
+│   └── dashboard.jpg
 ├── ru/
-│   ├── MENU.gif
-│   └── DASHBOARD.gif
+│   ├── menu.gif
+│   └── dashboard.gif
 └── default.jpg
 ```
 
@@ -107,3 +112,12 @@ All translation keys must follow a unified structure:
 | Button: confirm deletion              | `btn-plan-confirm-delete`         |
 | Message: plan created successfully    | `msg-plan-created-success`        |
 | Notification: gateway test failed     | `ntf-gateway-test-payment-failed` |
+
+
+# `QR Code Logo`
+
+You can customize the appearance of the generated invitation QR code by adding your logo to the center of the code.
+
+* **Path:** `assets/logo.png`
+* **Purpose:** If this file exists, the system will use it as a logo, overlaying it in the center of the generated QR code image for branding purposes.
+* **Format:** The logo must be a `PNG` file, preferably with a transparent background.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Final, Optional, Union
 
+from src.core.constants import T_ME
 from src.core.enums import PlanType
 
 if TYPE_CHECKING:
@@ -27,7 +28,7 @@ def format_user_log(user: Union[BaseUserDto, UserDto]) -> str:
 def format_username_to_url(username: str, text: Optional[str]) -> str:
     clean_username = username.lstrip("@")
     encoded_text = quote(text or "")
-    return f"https://t.me/{clean_username}?text={encoded_text}"
+    return f"{T_ME}{clean_username}?text={encoded_text}"
 
 
 def format_days_to_datetime(value: int, year: int = 2099) -> datetime:
@@ -209,7 +210,7 @@ def i18n_format_expire_time(expiry: Union[timedelta, datetime]) -> list[tuple[st
 
     if delta.total_seconds() <= 0:
         # Already expired or zero, default to 1 minute
-        return [(TimeUnitKey.MINUTE, {"value": 1})]
+        return [("unknown", {"value": 0})]
 
     days = delta.days
     seconds = delta.seconds
@@ -235,7 +236,7 @@ def i18n_format_expire_time(expiry: Union[timedelta, datetime]) -> list[tuple[st
         parts.append((TimeUnitKey.MINUTE, {"value": minutes}))
 
     # Default to 1 minute if everything is zero
-    return parts or [(TimeUnitKey.MINUTE, {"value": 1})]
+    return parts or [("unknown", {"value": 0})]
 
 
 def i18n_postprocess_text(text: str, collapse_level: int = 2) -> str:

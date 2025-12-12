@@ -10,12 +10,11 @@ LOG_DIR: Final[Path] = BASE_DIR / "logs"
 
 DOMAIN_REGEX: Pattern[str] = re.compile(r"^(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$")
 TAG_REGEX: Pattern[str] = re.compile(r"^[A-Z0-9_]+$")
-URL_PATTERN: Pattern[str] = re.compile(
-    r"https://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)"
-)
+URL_PATTERN: Pattern[str] = re.compile(r"^https?://.*$")
 USERNAME_PATTERN: Pattern[str] = re.compile(r"^@[a-zA-Z0-9_]{5,32}$")
 DATETIME_FORMAT: Final[str] = "%d.%m.%Y %H:%M:%S"
 
+T_ME: Final[str] = "https://t.me/"
 API_V1: Final[str] = "/api/v1"
 BOT_WEBHOOK_PATH: Final[str] = "/telegram"
 PAYMENTS_WEBHOOK_PATH: Final[str] = "/payments"
@@ -26,6 +25,7 @@ REMNASHOP_PREFIX: Final[str] = "rs_"
 PURCHASE_PREFIX: Final[str] = "purchase_"
 GOTO_PREFIX: Final[str] = "gt_"
 ENCRYPTED_PREFIX: Final[str] = "enc_"
+REFERRAL_PREFIX: Final[str] = "ref_"
 
 IMPORTED_TAG: Final[str] = "IMPORTED"
 

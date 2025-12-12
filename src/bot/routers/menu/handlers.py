@@ -11,13 +11,17 @@ from loguru import logger
 from src.bot.keyboards import CALLBACK_CHANNEL_CONFIRM, CALLBACK_RULES_ACCEPT
 from src.bot.states import MainMenu
 from src.core.constants import USER_KEY
+from src.core.enums import MediaType
+from src.core.i18n.translator import get_translated_kwargs
 from src.core.utils.formatters import format_user_log as log
 from src.core.utils.message_payload import MessagePayload
 from src.infrastructure.database.models.dto import PlanSnapshotDto, UserDto
 from src.infrastructure.taskiq.tasks.subscriptions import trial_subscription_task
 from src.services.notification import NotificationService
 from src.services.plan import PlanService
+from src.services.referral import ReferralService
 from src.services.remnawave import RemnawaveService
+from src.services.settings import SettingsService
 
 router = Router(name=__name__)
 
@@ -34,6 +38,7 @@ async def on_start_dialog(
     )
 
 
+@inject
 @router.message(CommandStart(ignore_case=True))
 async def on_start_command(
     message: Message,
@@ -111,9 +116,68 @@ async def show_reason(
     i18n: FromDishka[TranslatorRunner],
 ) -> None:
     user: UserDto = dialog_manager.middleware_data[USER_KEY]
-    status = user.current_subscription.status if user.current_subscription else False
+    subscription = user.current_subscription
+
+    if subscription:
+        kwargs = {
+            "status": subscription.get_status,
+            "is_trial": subscription.is_trial,
+            "traffic_strategy": subscription.plan.traffic_limit_strategy,
+            "reset_time": subscription.get_expire_time,
+        }
+    else:
+        kwargs = {"status": False}
 
     await callback.answer(
-        text=i18n.get("ntf-connect-not-available", status=status),
+        text=i18n.get("ntf-connect-not-available", **get_translated_kwargs(i18n, kwargs)),
         show_alert=True,
     )
+
+
+@inject
+async def on_show_qr(
+    callback: CallbackQuery,
+    widget: Button,
+    dialog_manager: DialogManager,
+    referral_service: FromDishka[ReferralService],
+    notification_service: FromDishka[NotificationService],
+) -> None:
+    user: UserDto = dialog_manager.middleware_data[USER_KEY]
+
+    ref_link = await referral_service.get_ref_link(user.referral_code)
+    ref_qr = referral_service.get_ref_qr(ref_link)
+
+    await notification_service.notify_user(
+        user=user,
+        payload=MessagePayload.not_deleted(
+            i18n_key="",
+            media=ref_qr,
+            media_type=MediaType.PHOTO,
+        ),
+    )
+
+
+@inject
+async def on_withdraw_points(
+    callback: CallbackQuery,
+    widget: Button,
+    dialog_manager: DialogManager,
+    i18n: FromDishka[TranslatorRunner],
+) -> None:
+    await callback.answer(
+        text=i18n.get("ntf-invite-withdraw-points-error"),
+        show_alert=True,
+    )
+
+
+@inject
+async def on_invite(
+    callback: CallbackQuery,
+    widget: Button,
+    dialog_manager: DialogManager,
+    settings_service: FromDishka[SettingsService],
+) -> None:
+    if await settings_service.is_referral_enable():
+        await dialog_manager.switch_to(state=MainMenu.INVITE)
+    else:
+        return
