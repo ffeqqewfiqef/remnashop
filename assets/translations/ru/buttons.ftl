@@ -28,7 +28,7 @@ btn-squad-choice = { $selected ->
 
 
 # Menu
-btn-menu-connect = 🚀 Подключиться
+btn-menu-connect = 🚀 ИНСТРУКЦИЯ
 
 btn-menu-connect-not-available =
     ⚠️ { $status -> 
@@ -413,7 +413,7 @@ btn-subscription-get = 🎁 Получить бесплатно
 btn-subscription-back-plans = ⬅️ Назад к выбору плана
 btn-subscription-back-duration = ⬅️ Изменить длительность
 btn-subscription-back-payment-method = ⬅️ Изменить способ оплаты
-btn-subscription-connect = 🚀 Подключиться
+btn-subscription-connect = 🚀 ИНСТРУКЦИЯ
 btn-subscription-duration = { $period } | { $final_amount -> 
     [0] 🎁
     *[HAS] { $final_amount }{ $currency }
